@@ -1,0 +1,325 @@
+-- Creador: jake_Hs
+-- ☢️ Family HS HUB - Edición Completa Optimizada
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+local W = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+-- ==========================================
+-- 🛠️ FUNCIONES DE UTILIDAD
+-- ==========================================
+local function toClipboard(str)
+    local setcb = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set)
+    if setcb then setcb(str) return true end
+    return false
+end
+
+-- ==========================================
+-- 👁️ GUI DEL VISUALIZADOR FLOTANTE
+-- ==========================================
+local coreGui = game:GetService("CoreGui")
+local coordGui = Instance.new("ScreenGui")
+coordGui.Name = "HsCoordsVisualizer"
+coordGui.ResetOnSpawn = false
+pcall(function() coordGui.Parent = coreGui end)
+if not coordGui.Parent then coordGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+
+local coordLabel = Instance.new("TextLabel")
+coordLabel.Size = UDim2.new(0, 220, 0, 35)
+coordLabel.Position = UDim2.new(0.5, -110, 0, 20) 
+coordLabel.BackgroundTransparency = 0.6
+coordLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+coordLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+coordLabel.TextScaled = false
+coordLabel.TextSize = 16
+coordLabel.Font = Enum.Font.Code
+coordLabel.Text = "X: 0 | Y: 0 | Z: 0"
+coordLabel.Visible = false
+coordLabel.Parent = coordGui
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0.2, 0)
+corner.Parent = coordLabel
+
+local renderConnection = nil
+
+-- ==========================================
+-- 🪟 CREACIÓN DE LA VENTANA PRINCIPAL
+-- ==========================================
+local w = W:CreateWindow({
+    Title = "☢️ Family HS HUB",
+    Author = "by jake_Hs",
+    Folder = "HsHub",
+    Accent = Color3.fromRGB(255, 255, 0),
+    Transparent = true,
+    Theme = "Dark",
+    Size = UDim2.fromOffset(580, 460),
+    Resizable = true,
+    HideSearchBar = true,
+    OpenButton = {
+        Title = "banger HS",
+        CornerRadius = UDim.new(0.1, 0),
+        StrokeThickness = 5,
+        Enabled = true,
+        Draggable = true,
+        Scale = 0.8,
+        Color = ColorSequence.new(Color3.fromHex("#ffff00"), Color3.fromHex("#ffff00"))
+    }
+})
+w:SetToggleKey(Enum.KeyCode.RightShift)
+
+-- ==========================================
+-- 📍 PESTAÑA 1: UBICACIÓN
+-- ==========================================
+local tpTab = w:Tab({ Title = "Ubicación", Icon = "solar:routing-bold" })
+
+local savedPoints = {} 
+local savedNames = {}  
+local pointCounter = 1
+local selectedPointIndex = nil
+
+local dropDownTarget = tpTab:Dropdown({
+    Title = "📌 Puntos Guardados",
+    Desc = "Selecciona una ubicación para ir o eliminar",
+    Items = {"Ninguno"},
+    Callback = function(Value)
+        for i, name in ipairs(savedNames) do
+            if name == Value then
+                selectedPointIndex = i
+                return
+            end
+        end
+        selectedPointIndex = nil
+    end
+})
+
+-- MOVIDO HACIA ARRIBA PARA ACCESO RÁPIDO
+tpTab:Button({
+    Title = "⚡ Ir (Instantáneo)",
+    Desc = "Te teletransporta de golpe al punto seleccionado",
+    Callback = function()
+        if selectedPointIndex and savedPoints[selectedPointIndex] then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = savedPoints[selectedPointIndex]
+            end
+        end
+    end
+})
+
+tpTab:Button({
+    Title = "💾 Guardar Posición Actual",
+    Desc = "Guarda donde estás parado como un nuevo punto",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pointName = "Punto " .. pointCounter
+            table.insert(savedPoints, hrp.CFrame)
+            table.insert(savedNames, pointName)
+            pointCounter = pointCounter + 1
+            dropDownTarget:Refresh(savedNames)
+        end
+    end
+})
+
+tpTab:Button({
+    Title = "🗑️ Eliminar Punto Seleccionado",
+    Desc = "Borra el punto seleccionado en el menú de arriba",
+    Callback = function()
+        if selectedPointIndex then
+            table.remove(savedPoints, selectedPointIndex)
+            table.remove(savedNames, selectedPointIndex)
+            selectedPointIndex = nil
+            if #savedNames > 0 then
+                dropDownTarget:Refresh(savedNames)
+            else
+                dropDownTarget:Refresh({"Ninguno"})
+            end
+        end
+    end
+})
+
+tpTab:Divider()
+
+local hubTweenTime = 3
+local isLooping = false
+local currentTween = nil
+
+tpTab:Input({
+    Title = "Velocidad / Tiempo de Tween (Segundos)",
+    Desc = "Tiempo que tarda en volar entre puntos (Ej: 3)",
+    PlaceholderText = "Escribe el número aquí...",
+    ClearTextOnFocus = false,
+    Callback = function(text)
+        local value = tonumber(text)
+        if value then hubTweenTime = value end
+    end
+})
+
+tpTab:Button({
+    Title = "🛸 Ir (Animado/Tween)",
+    Desc = "Vuela hacia el punto seleccionado",
+    Callback = function()
+        if selectedPointIndex and savedPoints[selectedPointIndex] then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if currentTween then currentTween:Cancel() end
+                local tInfo = TweenInfo.new(hubTweenTime, Enum.EasingStyle.Linear)
+                currentTween = TweenService:Create(hrp, tInfo, {CFrame = savedPoints[selectedPointIndex]})
+                currentTween:Play()
+            end
+        end
+    end
+})
+
+tpTab:Toggle({
+    Title = "🔁 Reproducir Ruta (Auto-Farm)",
+    Desc = "Viaja por todos los puntos guardados en bucle, como una playlist de música.",
+    Default = false,
+    Callback = function(state)
+        isLooping = state
+        if state then
+            task.spawn(function()
+                local playIndex = 1
+                while isLooping do
+                    if #savedPoints == 0 then
+                        task.wait(1)
+                        continue
+                    end
+                    if playIndex > #savedPoints then playIndex = 1 end
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local tInfo = TweenInfo.new(hubTweenTime, Enum.EasingStyle.Linear)
+                        currentTween = TweenService:Create(hrp, tInfo, {CFrame = savedPoints[playIndex]})
+                        currentTween:Play()
+                        task.wait(hubTweenTime)
+                    else
+                        task.wait(1)
+                    end
+                    playIndex = playIndex + 1
+                    task.wait(0.5) 
+                end
+            end)
+        else
+            if currentTween then currentTween:Cancel() end
+        end
+    end
+})
+
+-- ==========================================
+-- 📜 PESTAÑA 2: GENERADOR DE SCRIPTS
+-- ==========================================
+local genTab = w:Tab({
+    Title = "Generador",
+    Icon = "solar:document-bold"
+})
+
+genTab:Button({
+    Title = "📋 Copiar Mi Posición Actual",
+    Desc = "Copia las coordenadas exactas al portapapeles",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos = hrp.Position
+            toClipboard(string.format("%d, %d, %d", math.floor(pos.X), math.floor(pos.Y), math.floor(pos.Z)))
+        end
+    end
+})
+
+genTab:Toggle({
+    Title = "👁️ Mostrar mis coordenadas",
+    Desc = "Muestra tu ubicación actual en pantalla en tiempo real",
+    Default = false,
+    Callback = function(state)
+        coordLabel.Visible = state
+        if state then
+            renderConnection = RunService.RenderStepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local pos = char.HumanoidRootPart.Position
+                    coordLabel.Text = string.format("X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
+                end
+            end)
+        else
+            if renderConnection then 
+                renderConnection:Disconnect() 
+                renderConnection = nil 
+            end
+        end
+    end
+})
+
+genTab:Divider()
+
+genTab:Button({
+    Title = "🚀 Copiar Script TP (Instantáneo)",
+    Desc = "Genera un script para teletransportarse a donde estás parado ahora mismo",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos = hrp.Position
+            local tpScript = string.format([[
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+HumanoidRootPart.CFrame = CFrame.new(%s, %s, %s)
+]], math.floor(pos.X), math.floor(pos.Y), math.floor(pos.Z))
+            toClipboard(tpScript)
+        end
+    end
+})
+
+-- Nota: Se eliminó el campo de texto. El tiempo por defecto está configurado en 3s en el generador de abajo.
+genTab:Button({
+    Title = "🛸 Copiar Script TP (Animado/Tween)",
+    Desc = "Genera un script de vuelo hacia tu posición actual (Tiempo por defecto: 3s)",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos = hrp.Position
+            local tweenScript = string.format([[
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
+TweenService:Create(HumanoidRootPart, tweenInfo, {CFrame = CFrame.new(%s, %s, %s)}):Play()
+]], math.floor(pos.X), math.floor(pos.Y), math.floor(pos.Z))
+            toClipboard(tweenScript)
+        end
+    end
+})
+
+-- ==========================================
+-- ⚙️ PESTAÑA 3: AJUSTES
+-- ==========================================
+local sT = w:Tab({ Title = "Ajustes", Icon = "solar:settings-bold" })
+local ExecutorName = "Desconocido"
+pcall(function() ExecutorName = tostring(identifyexecutor()) end)
+
+sT:Paragraph({ Title = "🖥️ Información del Sistema", Desc = "Ejecutor: " .. ExecutorName })
+sT:Button({
+    Title = "🛑 Destruir Script",
+    Desc = "Elimina el menú y apaga todas las funciones",
+    Color = Color3.fromRGB(255, 50, 50),
+    Callback = function()
+        isLooping = false
+        if currentTween then currentTween:Cancel() end
+        if renderConnection then renderConnection:Disconnect() end
+        if coordGui then coordGui:Destroy() end
+        if w and w.Destroy then w:Destroy() end
+    end
+})
