@@ -1,0 +1,546 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- =====================================================================
+-- 0. MOTOR DE SEGURIDAD Y ENRUTAMIENTO
+-- =====================================================================
+local function GetSecureContainer()
+    if gethui then return gethui()
+    elseif get_hidden_gui then return get_hidden_gui() end
+    local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+    if success and coreGui then return coreGui end
+    return LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- =====================================================================
+-- VARIABLES GLOBALES DE LA PORTAL GUN
+-- =====================================================================
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+local PORTAL_TEXTURE = "rbxassetid://7493310007"
+local GREEN = Color3.fromRGB(0,255,40)
+
+local portalA, portalB = nil, nil
+local pointStage = 0
+local pointA, pointB = nil, nil
+local pointSelecting = false
+local teleportDebounce = false
+local currentMode = "POINT"
+local portal_gun, portal_sound, Handle = nil, nil, nil
+local targetInputText = "" 
+
+-- =====================================================================
+-- LÓGICA INTERNA DE LA PORTAL GUN
+-- =====================================================================
+local function getBackpack()
+	Backpack = LocalPlayer:WaitForChild("Backpack")
+	return Backpack
+end
+
+local function removeOldGuns()
+	local backpack = getBackpack()
+	for _,container in ipairs({backpack, LocalPlayer.Character}) do
+		if container then
+			for _,obj in ipairs(container:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "Portal_Gun" then obj:Destroy() end
+			end
+		end
+	end
+end
+
+removeOldGuns()
+
+function clearPointSelection()
+	pointStage = 0
+	pointA = nil
+	pointB = nil
+	pointSelecting = false
+end
+
+function clearAllPortals()
+	if portalA and portalA.Parent then portalA:Destroy() end
+	if portalB and portalB.Parent then portalB:Destroy() end
+	portalA = nil
+	portalB = nil
+	clearPointSelection()
+end
+
+local function createGun()
+	if portal_gun and portal_gun.Parent then return portal_gun end
+	portal_gun = Instance.new("Tool")
+	portal_gun.Name = "Portal_Gun"
+	portal_gun.RequiresHandle = true
+	portal_gun.CanBeDropped = false
+
+	Handle = Instance.new("Part")
+	Handle.Name = "Handle"
+	Handle.Parent = portal_gun
+	Handle.Color = Color3.fromRGB(231,231,236)
+	Handle.Material = Enum.Material.Plastic
+	Handle.Size = Vector3.new(1.045, 0.453, 0.453)
+	Handle.CFrame = CFrame.new(-10.028, 4.312, 19.112) * CFrame.Angles(math.rad(0), math.rad(-180), math.rad(107.64))
+	Handle.CanCollide = false
+	Handle.CanTouch = false
+	Handle.CanQuery = false
+	Handle.Massless = true
+
+	local function createPart(name, color, material, size, position, orientation, shape, transparency)
+		local p = Instance.new("Part")
+		p.Name = name; p.Color = color; p.Material = material; p.Size = size; p.Position = position; 
+        p.Orientation = orientation or Vector3.zero; p.Transparency = transparency or 0
+		p.CanCollide = false; p.CanTouch = false; p.CanQuery = false; p.Massless = true
+		if shape then p.Shape = shape end
+		p.Parent = portal_gun
+		return p
+	end
+
+	createPart("Union", Color3.fromRGB(0,255,0), Enum.Material.Plastic, Vector3.new(0.304,0.476,0.302), Vector3.new(-8.972,5.269,19.079), Vector3.new(0,180,-3.64), nil, 0.45)
+	createPart("part1", Color3.fromRGB(17,17,17), Enum.Material.Plastic, Vector3.new(0.2,0.24,0.99), Vector3.new(-8.716,4.926,19.111), Vector3.new(0,180,-3.64))
+	createPart("part2", Color3.fromRGB(231,231,236), Enum.Material.Plastic, Vector3.new(1.04,0.3,0.48), Vector3.new(-9.874,4.855,19.095), Vector3.new(-0.02,90,0), Enum.PartType.Cylinder)
+	createPart("part3", Color3.fromRGB(17,17,17), Enum.Material.Plastic, Vector3.new(0.2,0.47,0.45), Vector3.new(-8.939,4.948,19.086), Vector3.new(3.47,-90,-90), Enum.PartType.Cylinder)
+	createPart("part4", Color3.fromRGB(231,231,236), Enum.Material.Plastic, Vector3.new(1.04,0.3,0.48), Vector3.new(-9.874,4.845,19.095), Vector3.new(-0.02,90,0), Enum.PartType.Cylinder)
+	createPart("part5", Color3.fromRGB(17,17,17), Enum.Material.Plastic, Vector3.new(0.2,0.2,0.2), Vector3.new(-9.894,4.93,19.061), Vector3.new(11.67,-90,-90))
+	local part6 = createPart("part6", Color3.fromRGB(0,255,0), Enum.Material.Neon, Vector3.new(0.2,0.31,0.2), Vector3.new(-8.715,4.919,19.095), Vector3.new(0,180,-3.64), Enum.PartType.Cylinder)
+	createPart("part7", Color3.fromRGB(231,231,236), Enum.Material.Plastic, Vector3.new(1.04,0.3,0.48), Vector3.new(-9.874,4.865,19.095), Vector3.new(-0.02,90,0), Enum.PartType.Cylinder)
+	local part8 = createPart("part8", Color3.fromRGB(248,248,248), Enum.Material.SmoothPlastic, Vector3.new(0.2,0.2,0.2), Vector3.new(-8.952,5.2,19.088), Vector3.new(0,0,3.64), nil, 1)
+	
+	local smoke = Instance.new("Smoke")
+	smoke.Color = Color3.fromRGB(82,255,82)
+	smoke.Size = 0.1
+	smoke.RiseVelocity = 8
+	smoke.Parent = part8
+
+	local part9 = createPart("part9", Color3.fromRGB(117,0,0), Enum.Material.Plastic, Vector3.new(0.24,0.27,0.54), Vector3.new(-9.543,4.891,19.086), Vector3.new(0,180,-3.64))
+	createPart("part10", Color3.fromRGB(0,255,0), Enum.Material.Neon, Vector3.new(0.2,0.31,0.2), Vector3.new(-8.715,4.919,19.456), Vector3.new(0,180,-3.64), Enum.PartType.Cylinder)
+	createPart("part11", Color3.fromRGB(0,255,0), Enum.Material.Neon, Vector3.new(0.2,0.31,0.2), Vector3.new(-8.715,4.919,18.765), Vector3.new(0,180,-3.64), Enum.PartType.Cylinder)
+	createPart("part12", Color3.fromRGB(231,231,236), Enum.Material.Plastic, Vector3.new(1.31,0.27,1.03), Vector3.new(-9.279,4.886,19.101), Vector3.new(0,180,-3.64))
+	createPart("part14", Color3.fromRGB(231,231,236), Enum.Material.Plastic, Vector3.new(1.04,0.3,0.48), Vector3.new(-9.874,4.875,19.095), Vector3.new(-0.02,90,0), Enum.PartType.Cylinder)
+
+	portal_gun.GripForward = Vector3.new(0,0,-1)
+	portal_gun.GripPos = Vector3.new(0,-0.2,0)
+	portal_gun.GripRight = Vector3.new(0,0,-1)
+	portal_gun.GripUp = Vector3.new(1,0.015,0)
+
+	local function Weld(x,y)
+		local W = Instance.new("Weld")
+		W.Part0 = x; W.Part1 = y
+		local CJ = CFrame.new(x.Position)
+		W.C0 = x.CFrame:Inverse() * CJ; W.C1 = y.CFrame:Inverse() * CJ
+		W.Parent = x
+		return W
+	end
+
+	for _,v in ipairs(portal_gun:GetChildren()) do
+		if v:IsA("Part") and v ~= Handle then Weld(v,Handle) end
+	end
+
+	portal_sound = Instance.new("Sound")
+	portal_sound.SoundId = "rbxassetid://1013378689"
+	portal_sound.Volume = 2.5
+	portal_sound.Parent = Handle
+
+	local liquid = Instance.new("Part")
+	liquid.Shape = Enum.PartType.Cylinder; liquid.Size = Vector3.new(0.22, 0.24, 0.22)
+	liquid.Color = Color3.fromRGB(70, 255, 20); liquid.Material = Enum.Material.Neon
+	liquid.Transparency = 0.1; liquid.CanCollide = false; liquid.Massless = true
+	liquid.CFrame = part6.CFrame; liquid.Parent = portal_gun
+
+	local liquidWeld = Instance.new("Weld")
+	liquidWeld.Part0 = part6; liquidWeld.Part1 = liquid; liquidWeld.Parent = part6
+
+	local liquidLight = Instance.new("PointLight")
+	liquidLight.Color = GREEN; liquidLight.Brightness = 2; liquidLight.Range = 5; liquidLight.Parent = liquid
+
+	local liquidRotation = 0
+	RunService.RenderStepped:Connect(function(dt)
+		if liquidWeld and liquidWeld.Parent then
+			liquidRotation += dt * 8
+			liquidWeld.C0 = CFrame.Angles(0, liquidRotation, 0)
+		end
+	end)
+
+	return portal_gun
+end
+
+local function muzzleFlash()
+	if not Handle then return end
+	local flash = Instance.new("Part")
+	flash.Shape = Enum.PartType.Ball; flash.Material = Enum.Material.Neon
+	flash.Color = GREEN; flash.Size = Vector3.new(0.5,0.5,0.5); flash.Transparency = 0
+	flash.CanCollide = false; flash.Anchored = true
+	flash.CFrame = Handle.CFrame * CFrame.new(-0.65,0,0)
+	flash.Parent = workspace
+
+	local light = Instance.new("PointLight")
+	light.Color = GREEN; light.Brightness = 8; light.Range = 12; light.Parent = flash
+
+	TweenService:Create(flash, TweenInfo.new(0.18), {Size = Vector3.new(2,2,2), Transparency = 1}):Play()
+	task.delay(0.2,function() if flash then flash:Destroy() end end)
+end
+
+local function create_portal(position, lookDirection)
+	local portal = Instance.new("Part")
+	portal.Name = "TeleportPortal"; portal.Size = Vector3.new(6, 8, 0.25)
+	portal.Transparency = 1; portal.Anchored = true; portal.CanCollide = false; portal.CanTouch = true
+
+	local direction = Vector3.new(lookDirection.X, 0, lookDirection.Z)
+	if direction.Magnitude < 0.01 then direction = Vector3.new(0, 0, -1) else direction = direction.Unit end
+	portal.CFrame = CFrame.lookAt(position + Vector3.new(0,4,0), position + Vector3.new(0,4,0) + direction)
+	portal.Parent = workspace
+
+	local decalFront = Instance.new("Decal")
+	decalFront.Face = Enum.NormalId.Front; decalFront.Texture = PORTAL_TEXTURE; decalFront.Parent = portal
+
+	local decalBack = Instance.new("Decal")
+	decalBack.Face = Enum.NormalId.Back; decalBack.Texture = PORTAL_TEXTURE; decalBack.Parent = portal
+
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(70, 255, 0); light.Brightness = 7; light.Range = 14; light.Parent = portal
+
+	local attachment = Instance.new("Attachment"); attachment.Parent = portal
+
+	local particles = Instance.new("ParticleEmitter")
+	particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	particles.Color = ColorSequence.new(Color3.fromRGB(80, 255, 0))
+	particles.LightEmission = 1; particles.Rate = 35; particles.Lifetime = NumberRange.new(0.3, 0.8)
+	particles.Speed = NumberRange.new(1, 4); particles.SpreadAngle = Vector2.new(360, 360)
+	particles.Parent = attachment
+
+	task.spawn(function()
+		local originalSize = portal.Size
+		while portal and portal.Parent do
+			local scale = 1 + math.random(-4,4) / 100
+			portal.Size = Vector3.new(originalSize.X * scale, originalSize.Y * scale, originalSize.Z)
+			task.wait(0.06)
+		end
+	end)
+	return portal
+end
+
+local function connectPortalTeleport(entrance, destination)
+	if not entrance or not destination then return end
+	entrance.Touched:Connect(function(hit)
+		if teleportDebounce then return end
+		local character = LocalPlayer.Character
+		if not character or not hit:IsDescendantOf(character) then return end
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		teleportDebounce = true
+		if portal_sound then portal_sound:Play() end
+		hrp.CFrame = destination.CFrame * CFrame.new(0, 0, -3)
+		task.wait(0.7)
+		teleportDebounce = false
+	end)
+end
+
+local function createPortalPair(posA, posB)
+	clearAllPortals()
+	portalA = create_portal(posA, posB - posA)
+	portalB = create_portal(posB, posA - posB)
+	connectPortalTeleport(portalA, portalB)
+	connectPortalTeleport(portalB, portalA)
+end
+
+local function raycastFromScreen(screenPosition)
+	local camera = workspace.CurrentCamera
+	if not camera then return nil end
+	local ray = camera:ViewportPointToRay(screenPosition.X, screenPosition.Y)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	if LocalPlayer.Character then params.FilterDescendantsInstances = {LocalPlayer.Character} end
+	return workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+end
+
+-- Funciones core
+local updateStatusLabel -- Declaración adelantada para el UI
+function setMode(mode)
+	clearAllPortals()
+	currentMode = mode
+	if updateStatusLabel then
+		if mode == "POINT" then updateStatusLabel("MODO: POINT")
+		elseif mode == "PLAYER" then updateStatusLabel("MODO: PLAYER")
+		elseif mode == "PLACE" then updateStatusLabel("MODO: PLACE") end
+	end
+end
+
+local function startPointSelection()
+	if currentMode ~= "POINT" then return end
+	clearPointSelection()
+	pointSelecting = true
+	pointStage = 1
+	if updateStatusLabel then updateStatusLabel("TOCA EL PUNTO A") end
+end
+
+local function setPoint(position)
+	if currentMode ~= "POINT" or not pointSelecting then return end
+	if pointStage == 1 then
+		pointA = position; pointStage = 2; muzzleFlash()
+		if portal_sound then portal_sound:Play() end
+		if updateStatusLabel then updateStatusLabel("TOCA EL PUNTO B") end
+		return
+	end
+	if pointStage == 2 then
+		pointB = position; muzzleFlash()
+		if portal_sound then portal_sound:Play() end
+		createPortalPair(pointA, pointB)
+		pointStage = 0; pointSelecting = false; pointA = nil; pointB = nil
+		if updateStatusLabel then updateStatusLabel("PORTALES ACTIVOS") end
+	end
+end
+
+local function findPlayer(name)
+	name = string.lower(string.gsub(name, "^%s*(.-)%s*$", "%1"))
+	for _,player in ipairs(Players:GetPlayers()) do
+		if string.lower(player.Name) == name or string.lower(player.DisplayName) == name then return player end
+	end
+	return nil
+end
+
+local function firePlayerPortal(playerName)
+	local target = findPlayer(playerName)
+	if not target or not target.Character then return false end
+	local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+	local character = LocalPlayer.Character
+	if not targetHRP or not character then return false end
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+
+	muzzleFlash()
+	if portal_sound then portal_sound:Play() end
+	clearAllPortals()
+
+	local entrance = create_portal(hrp.Position + hrp.CFrame.LookVector * 5, hrp.CFrame.LookVector)
+	local destination = create_portal(targetHRP.Position, -targetHRP.CFrame.LookVector)
+	portalA = entrance; portalB = destination
+	connectPortalTeleport(entrance, destination)
+	return true
+end
+
+local function firePlacePortal(placeId)
+	placeId = tonumber(placeId)
+	if not placeId then return false end
+	local character = LocalPlayer.Character
+	if not character then return false end
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+
+	muzzleFlash()
+	if portal_sound then portal_sound:Play() end
+	clearAllPortals()
+
+	local portal = create_portal(hrp.Position + hrp.CFrame.LookVector * 5, hrp.CFrame.LookVector)
+	portalA = portal
+	portal.Touched:Connect(function(hit)
+		if teleportDebounce then return end
+		local char = LocalPlayer.Character
+		if not char or not hit:IsDescendantOf(char) then return end
+		teleportDebounce = true
+		if portal_sound then portal_sound:Play() end
+		pcall(function() TeleportService:Teleport(placeId, LocalPlayer) end)
+	end)
+	return true
+end
+
+function fire()
+	if currentMode == "PLAYER" then
+		if targetInputText == "" then if updateStatusLabel then updateStatusLabel("FALTA JUGADOR") end return end
+		if firePlayerPortal(targetInputText) then if updateStatusLabel then updateStatusLabel("PORTAL CREADO") end 
+        else if updateStatusLabel then updateStatusLabel("ERROR: NO ENCONTRADO") end end
+		return
+	end
+	if currentMode == "PLACE" then
+		if targetInputText == "" then if updateStatusLabel then updateStatusLabel("FALTA ID") end return end
+		if firePlacePortal(targetInputText) then if updateStatusLabel then updateStatusLabel("PORTAL CREADO") end 
+        else if updateStatusLabel then updateStatusLabel("ERROR: ID INVÁLIDO") end end
+		return
+	end
+	if currentMode == "POINT" then
+		if not pointSelecting then startPointSelection() end
+	end
+end
+
+-- =====================================================================
+-- QUICK PANEL GUI (Estilo original y adaptado para jake_Hs)
+-- =====================================================================
+local container = GetSecureContainer()
+local existingGui = container:FindFirstChild("HsQuickPanel")
+if existingGui then existingGui:Destroy() end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "HsQuickPanel"
+screenGui.ResetOnSpawn = false
+if syn and syn.protect_gui then syn.protect_gui(screenGui) end
+screenGui.Parent = container
+
+local panelFrame = Instance.new("Frame")
+panelFrame.Name = "MainFrame"
+panelFrame.Size = UDim2.new(0, 70, 0, 320)
+panelFrame.Position = UDim2.new(0, 10, 0.5, -160)
+panelFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panelFrame.BackgroundTransparency = 0.2
+panelFrame.Active = true
+panelFrame.Draggable = true
+panelFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 12)
+uiCorner.Parent = panelFrame
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(150, 150, 150)
+uiStroke.Thickness = 1.5
+uiStroke.Parent = panelFrame
+
+local uiList = Instance.new("UIListLayout")
+uiList.Parent = panelFrame
+uiList.SortOrder = Enum.SortOrder.LayoutOrder
+uiList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+uiList.Padding = UDim.new(0, 8)
+
+-- Padding interior
+local padding = Instance.new("UIPadding")
+padding.PaddingTop = UDim.new(0, 10)
+padding.Parent = panelFrame
+
+local function createPanelBtn(text, color, layoutOrder)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 55, 0, 35)
+    btn.BackgroundColor3 = color
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.LayoutOrder = layoutOrder
+    btn.AutoButtonColor = true
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+    btn.Parent = panelFrame
+    return btn
+end
+
+local eyeBtn = createPanelBtn("👁️", Color3.fromRGB(45, 45, 45), 1)
+local pointBtn = createPanelBtn("🎯 POINT", Color3.fromRGB(50, 50, 50), 2)
+local playerBtn = createPanelBtn("👤 P", Color3.fromRGB(50, 50, 50), 3)
+playerBtn.Text = "PLAYER" 
+local placeBtn = createPanelBtn("🗺️ ID", Color3.fromRGB(50, 50, 50), 4)
+placeBtn.Text = "PLACE"
+
+local inputBox = Instance.new("TextBox")
+inputBox.Size = UDim2.new(0, 60, 0, 30)
+inputBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+inputBox.PlaceholderText = "ID/Name"
+inputBox.Text = ""
+inputBox.TextScaled = true
+inputBox.Font = Enum.Font.SourceSans
+inputBox.LayoutOrder = 5
+local inCorner = Instance.new("UICorner")
+inCorner.CornerRadius = UDim.new(0, 6)
+inCorner.Parent = inputBox
+inputBox.Parent = panelFrame
+
+local fireBtn = createPanelBtn("🔫 FIRE", Color3.fromRGB(0, 150, 50), 6)
+
+local statusLbl = Instance.new("TextLabel")
+statusLbl.Size = UDim2.new(0, 65, 0, 20)
+statusLbl.BackgroundTransparency = 1
+statusLbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusLbl.TextScaled = true
+statusLbl.Text = "MODO: POINT"
+statusLbl.Font = Enum.Font.SourceSans
+statusLbl.LayoutOrder = 7
+statusLbl.Parent = panelFrame
+
+updateStatusLabel = function(txt)
+	if statusLbl then statusLbl.Text = txt end
+end
+
+-- Lógica de la Interfaz
+local isMinimized = false
+eyeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    for _, elem in ipairs(panelFrame:GetChildren()) do
+        if elem:IsA("GuiObject") and elem ~= eyeBtn then
+            elem.Visible = not isMinimized
+        end
+    end
+    if isMinimized then
+        panelFrame.Size = UDim2.new(0, 70, 0, 55)
+    else
+        panelFrame.Size = UDim2.new(0, 70, 0, 320)
+    end
+end)
+
+pointBtn.MouseButton1Click:Connect(function() setMode("POINT") end)
+playerBtn.MouseButton1Click:Connect(function() setMode("PLAYER") end)
+placeBtn.MouseButton1Click:Connect(function() setMode("PLACE") end)
+
+inputBox:GetPropertyChangedSignal("Text"):Connect(function()
+    targetInputText = inputBox.Text
+end)
+
+fireBtn.MouseButton1Click:Connect(function() fire() end)
+
+-- =====================================================================
+-- CONTROLES TÁCTILES Y RATÓN
+-- =====================================================================
+if UserInputService.TouchEnabled then
+	UserInputService.TouchTap:Connect(function(touchPositions, processed)
+		if processed or currentMode ~= "POINT" or not pointSelecting then return end
+		local touch = touchPositions[1]
+		if not touch then return end
+		local result = raycastFromScreen(touch)
+		if not result then return end
+		setPoint(result.Position)
+	end)
+end
+
+if UserInputService.MouseEnabled then
+	UserInputService.InputBegan:Connect(function(inputObject, processed)
+		if processed or inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+		if currentMode ~= "POINT" or not pointSelecting then return end
+		local mousePosition = UserInputService:GetMouseLocation()
+		local result = raycastFromScreen(mousePosition)
+		if not result then return end
+		setPoint(result.Position)
+	end)
+end
+
+-- =====================================================================
+-- GESTIÓN DE EQUIPAMIENTO
+-- =====================================================================
+createGun()
+portal_gun.Parent = getBackpack()
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+	task.wait(0.5)
+	clearAllPortals()
+	local newBackpack = LocalPlayer:WaitForChild("Backpack")
+	Backpack = newBackpack
+	portal_gun = nil; Handle = nil; portal_sound = nil
+	task.wait(0.5)
+	createGun()
+	if portal_gun then portal_gun.Parent = newBackpack end
+	setMode("POINT")
+end)
+
+Backpack.ChildRemoved:Connect(function(child)
+	if child ~= portal_gun then return end
+	task.delay(0.2,function()
+		local currentBackpack = getBackpack()
+		if not portal_gun then return end
+		if portal_gun.Parent == nil then
+			portal_gun = nil; Handle = nil; portal_sound = nil
+			createGun()
+			portal_gun.Parent = currentBackpack
+		end
+	end)
+end)
+
+setMode("POINT")
