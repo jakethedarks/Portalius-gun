@@ -444,6 +444,7 @@ CustomButtonGui.Name = "MiNuevaInterfaz"
 CustomButtonGui.ResetOnSpawn = false
 CustomButtonGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 CustomButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+CustomButtonGui.DisplayOrder=0
 
 local FireBoton = Instance.new("TextButton")
 FireBoton.Name = "BotonFire"
@@ -452,7 +453,8 @@ FireBoton.BackgroundTransparency=0.4
 FireBoton.Position = UDim2.fromScale(0.72, 0.04) -- Posición idéntica a tu fragmento
 FireBoton.Text = "FIRE\nOFF"
 FireBoton.TextScaled = true
-FireBoton.Font = Enum.Font.SourceSansBold
+FireBoton..Font = Enum.Font.GothamBold
+Fireboton.TextSize = 12
 FireBoton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 FireBoton.TextColor3 = Color3.fromRGB(255, 255, 255)
 FireBoton.Parent = CustomButtonGui
@@ -471,7 +473,7 @@ FireBoton.Activated:Connect(function()
 		fire()
 		
 		-- Regresar al estado original rápido si es una acción de "disparo"
-		task.wait(0.3)
+		task.wait(1)
 		isOn = false
 		FireBoton.Text = "FIRE\nOFF"
 		FireBoton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
