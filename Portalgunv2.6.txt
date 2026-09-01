@@ -436,45 +436,85 @@ local function connectTool()
 	portal_gun.Activated:Connect(function() fire() end)
 end
 
+-- 1. CONFIGURACIÓN DEL CONTENEDOR DEL BOTÓN
+--===========================================
+local MobileGui = Instance.new("ScreenGui")
+MobileGui.Name = "MiNuevaInterfaz"
+MobileGui.Parent = GetSecureContainer()
+MobileGui.ResetOnSpawn = false
+MobileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+--===========================================
+-- 2. FUNCIÓN PARA CREAR EL BOTÓN DIGITAL (ADAPTADA A "FIRE")
+--===========================================
+local function CrearBotonDigital(texto, posicion, color, alHacerClic)
+    local boton = Instance.new("TextButton")
+    boton.Name = "BotonFire"
+    boton.Size = UDim2.new(0, 75, 0, 75) -- Botón cuadrado y compacto
+    boton.Position = posicion
+    boton.BackgroundColor3 = color
+    boton.BackgroundTransparency = 0.4
+    boton.Text = texto
+    boton.TextScaled = true
+    boton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    boton.Font = Enum.Font.SourceSansBold
+    boton.AutoButtonColor = false
+    boton.Parent = MobileGui
+
+    -- Bordes redondeados sutiles
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 8)
+    uiCorner.Parent = boton
+
+    -- Detectar clic o toque
+    boton.Activated:Connect(alHacerClic)
+
+    return boton
+end
+
 --==================================================
--- NUEVO BOTÓN COMPACTO "FIRE" (ESTILO SOLICITADO)
+-- 3. FUNCIÓN PARA PERMITIR ARRASTRAR EL BOTÓN
 --==================================================
-CustomButtonGui = Instance.new("ScreenGui")
-CustomButtonGui.Name = "MiNuevaInterfaz"
-CustomButtonGui.ResetOnSpawn = false
-CustomButtonGui.Parent = GetSecureContainer()
+local function HacerArrastrable(boton)
+    local arrastrando = false
+    local entradaActual = nil
+    local posicionInicial = nil
+    local posicionBotonInicial = nil
 
-local FireBoton = Instance.new("TextButton")
-FireBoton.Name = "BotonFire"
-FireBoton.Size = UDim2.new(0, 75, 0, 75) -- Botón cuadrado y compacto
-FireBoton.Position = UDim2.fromScale(0.72, 0.04) -- Posición idéntica a tu fragmento
-FireBoton.Text = "FIRE\nOFF"
-FireBoton.TextScaled = true
-FireBoton.Font = Enum.Font.SourceSansBold
-FireBoton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-FireBoton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FireBoton.Parent = CustomButtonGui
+    boton.InputBegan:Connect(function(input)
+        local esToqueOMouse = (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
+        
+        if esToqueOMouse and Estado.MB.D then
+            arrastrando = true
+            posicionInicial = input.Position
+            posicionBotonInicial = boton.Position
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 8) -- Bordes redondeados sutiles
-UICorner.Parent = FireBoton
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    arrastrando = false
+                end
+            end)
+        end
+    end)
 
-local isOn = false
-FireBoton.Activated:Connect(function()
-	isOn = not isOn
-	
-	if isOn then
-		FireBoton.Text = "FIRE\nON"
-		FireBoton.BackgroundColor3 = Color3.fromRGB(37, 122, 247) -- Azul de tu fragmento
-		fire()
-		
-		-- Regresar al estado original rápido si es una acción de "disparo"
-		task.wait(0.3)
-		isOn = false
-		FireBoton.Text = "FIRE\nOFF"
-		FireBoton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-	end
-end)
+    boton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            entradaActual = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == entradaActual and arrastrando and Estado.MB.D then
+            local delta = input.Position - posicionInicial
+            boton.Position = UDim2.new(
+                posicionBotonInicial.X.Scale, 
+                posicionBotonInicial.X.Offset + delta.X, 
+                posicionBotonInicial.Y.Scale, 
+                posicionBotonInicial.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
 
 --==================================================
 -- MOUSE / TOUCH POINT INPUTS
