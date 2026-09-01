@@ -446,7 +446,8 @@ CustomButtonGui.Parent = GetSecureContainer()
 
 local FireBoton = Instance.new("TextButton")
 FireBoton.Name = "BotonFire"
-FireBoton.Size = UDim2.new(0, 75, 0, 75) -- Botón cuadrado y compacto
+FireBoton.Size = UDim2.new(0,60,0,45) --Botón cuadrado y compacto
+FireBoton.BackgroundTransparency=0.4
 FireBoton.Position = UDim2.fromScale(0.72, 0.04) -- Posición idéntica a tu fragmento
 FireBoton.Text = "FIRE\nOFF"
 FireBoton.TextScaled = true
