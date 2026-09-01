@@ -516,8 +516,7 @@ local function HacerArrastrable(boton)
             entradaActual = input
         end
     end)
-
-    UserInputService.InputChanged:Connect(function(input)
+        UserInputService.InputChanged:Connect(function(input)
         if input == entradaActual and arrastrando and Estado.MB.D then
             local delta = input.Position - posicionInicial
             boton.Position = UDim2.new(
@@ -529,6 +528,9 @@ local function HacerArrastrable(boton)
         end
     end)
 end
+
+-- Ejecuta la función sobre el botón para que funcione
+HacerArrastrable(FireBoton)
 --==================================================
 -- MOUSE / TOUCH POINT INPUTS
 --==================================================
