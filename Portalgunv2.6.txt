@@ -422,6 +422,14 @@ pT:Input({ Title = "Player name / Place ID", Callback = function(txt) input.Text
 pT:Button({ Title = "🔄 RESETEAR PORTALES", Callback = function() clearAllPortals() end })
 
 local sT = w:Tab({ Title = "Ajustes", Icon = "solar:settings-bold" })
+sT:Toggle({
+    Title = "Mover Botón (Draggable)",
+    Default = false,
+    Callback = function(state)
+        Estado.MB.D = state
+    end
+})
+
 sT:Button({
     Title = "🛑 Destruir Script",
     Color = Color3.fromRGB(255, 50, 50),
@@ -475,7 +483,48 @@ FireBoton.Activated:Connect(function()
 		FireBoton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 	end
 end)
+-- 3. FUNCIÓN PARA PERMITIR ARRASTRAR EL BOTÓN
+--===========================================
+local function HacerArrastrable(boton)
+    local arrastrando = false
+    local entradaActual = nil
+    local posicionInicial = nil
+    local posicionBotonInicial = nil
 
+    boton.InputBegan:Connect(function(input)
+        local esToqueOMouse = (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
+        
+        if esToqueOMouse and Estado.MB.D then
+            arrastrando = true
+            posicionInicial = input.Position
+            posicionBotonInicial = boton.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    arrastrando = false
+                end
+            end)
+        end
+    end)
+
+    boton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            entradaActual = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == entradaActual and arrastrando and Estado.MB.D then
+            local delta = input.Position - posicionInicial
+            boton.Position = UDim2.new(
+                posicionBotonInicial.X.Scale, 
+                posicionBotonInicial.X.Offset + delta.X, 
+                posicionBotonInicial.Y.Scale, 
+                posicionBotonInicial.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
 --==================================================
 -- MOUSE / TOUCH POINT INPUTS
 --==================================================
