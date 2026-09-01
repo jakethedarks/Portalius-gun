@@ -443,7 +443,6 @@ CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MiNuevaInterfaz"
 CustomButtonGui.ResetOnSpawn = false
 CustomButtonGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-CustomButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 CustomButtonGui.DisplayOrder=0
 
 local FireBoton = Instance.new("TextButton")
