@@ -422,6 +422,14 @@ pT:Input({ Title = "Player name / Place ID", Callback = function(txt) input.Text
 pT:Button({ Title = "🔄 RESETEAR PORTALES", Callback = function() clearAllPortals() end })
 
 local sT = w:Tab({ Title = "Ajustes", Icon = "solar:settings-bold" })
+sT:Toggle({
+    Title = "Mover Botón (Draggable)",
+    Default = false,
+    Callback = function(state)
+        Estado.MB.D = state
+    end
+})
+
 sT:Button({
     Title = "🛑 Destruir Script",
     Color = Color3.fromRGB(255, 50, 50),
