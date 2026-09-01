@@ -421,6 +421,8 @@ pT:Button({ Title = "🌍 Modo: PLACE", Callback = function() setMode("PLACE") e
 pT:Input({ Title = "Player name / Place ID", Callback = function(txt) input.Text = txt end })
 pT:Button({ Title = "🔄 RESETEAR PORTALES", Callback = function() clearAllPortals() end })
 
+local Estado = { MB = { D = false } }
+
 local sT = w:Tab({ Title = "Ajustes", Icon = "solar:settings-bold" })
 sT:Toggle({
     Title = "Mover Botón (Draggable)",
@@ -450,17 +452,19 @@ end
 CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MiNuevaInterfaz"
 CustomButtonGui.ResetOnSpawn = false
+CustomButtonGui.DisplayOrder = -5 -- Evita que se superponga al Hub
 CustomButtonGui.Parent = GetSecureContainer()
 
 local FireBoton = Instance.new("TextButton")
 FireBoton.Name = "BotonFire"
-FireBoton.Size = UDim2.new(0, 75, 0, 75) -- Botón cuadrado y compacto
-FireBoton.Position = UDim2.fromScale(0.72, 0.04) -- Posición idéntica a tu fragmento
+FireBoton.Size = UDim2.new(0, 60, 0, 45) 
+FireBoton.Position = UDim2.fromScale(0.72, 0.04) 
 FireBoton.Text = "FIRE\nOFF"
 FireBoton.TextScaled = true
 FireBoton.Font = Enum.Font.SourceSansBold
 FireBoton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 FireBoton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FireBoton.BackgroundTransparency = 0.4 -- Transparencia aplicada
 FireBoton.Parent = CustomButtonGui
 
 local UICorner = Instance.new("UICorner")
