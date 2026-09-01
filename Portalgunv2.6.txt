@@ -442,7 +442,8 @@ end
 CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MiNuevaInterfaz"
 CustomButtonGui.ResetOnSpawn = false
-CustomButtonGui.Parent = GetSecureContainer()
+CustomButtonGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+CustomButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local FireBoton = Instance.new("TextButton")
 FireBoton.Name = "BotonFire"
