@@ -1,7 +1,5 @@
---==================================================
 -- RICK PORTAL GUN + FAMILY HS HUB (WINDUI)
---==================================================
-
+--=========================================
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -32,9 +30,9 @@ local Handle = nil
 
 local CustomButtonGui = nil
 
---==================================================
+--===========================================
 -- MOTOR DE SEGURIDAD Y ENRUTAMIENTO
---==================================================
+--===========================================
 local function GetSecureContainer()
     if gethui then
         return gethui()
@@ -75,9 +73,9 @@ if oldGui then oldGui:Destroy() end
 local oldCustomGui = sc:FindFirstChild("MiNuevaInterfaz")
 if oldCustomGui then oldCustomGui:Destroy() end
 
---==================================================
+--===========================================
 -- PORTAL FUNCTIONS
---==================================================
+--===========================================
 local function destroyPortal(portal)
 	if portal and portal.Parent then
 		portal:Destroy()
@@ -99,9 +97,9 @@ local function clearAllPortals()
 	clearPointSelection()
 end
 
---==================================================
+--===========================================
 -- CREATE GUN
---==================================================
+--===========================================
 local function createGun()
 	if portal_gun and portal_gun.Parent then return portal_gun end
 
@@ -205,9 +203,9 @@ local function muzzleFlash()
 	task.delay(0.2, function() if flash then flash:Destroy() end end)
 end
 
---==================================================
+--===========================================
 -- PORTAL CREATION & TELEPORT
---==================================================
+--===========================================
 local function create_portal(position, lookDirection)
 	local portal = Instance.new("Part")
 	portal.Name = "TeleportPortal"
@@ -274,9 +272,9 @@ local function createPortalPair(posA, posB)
 	connectPortalTeleport(portalB, portalA)
 end
 
---==================================================
+--===========================================
 -- LOGIC FUNCTIONS
---==================================================
+--===========================================
 local W_library = nil
 local input = {Text = "", PlaceholderText = ""}
 
@@ -389,9 +387,9 @@ local function fire()
 	end
 end
 
---==================================================
+--=========================================
 -- WINDUI INTERFACE INTEGRATION (FAMILY HS HUB)
---==================================================
+--=========================================
 local W = loadstring(game:HttpGet(string.char(104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,70,111,111,116,97,103,101,115,117,115,47,87,105,110,100,85,73,47,109,97,105,110,47,100,105,115,116,47,109,97,105,110,46,108,117,97)))()
 W_library = W
 
@@ -406,11 +404,11 @@ local w = W:CreateWindow({
     Resizable = true,
     HideSearchBar = true,
     ScrollBarEnabled = false,
-    OpenButton = {
-        Title = "prototipo HS",
-        Enabled = true,
-        Position = UDim2.new(0.5, -25, 0, 20),
-        Color = ColorSequence.new(Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 0)) 
+OpenButton = {
+Title = "portal gun HS",
+Enabled = true,
+Position = UDim2.new(0.5, -25, 0, 20),
+Color = ColorSequence.new(Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 0)) 
     }
 })
 
@@ -446,9 +444,9 @@ local function connectTool()
 	portal_gun.Activated:Connect(function() fire() end)
 end
 
---==================================================
+--=========================================
 -- NUEVO BOTÓN COMPACTO "FIRE" (ESTILO SOLICITADO)
---==================================================
+--=========================================
 CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MiNuevaInterfaz"
 CustomButtonGui.ResetOnSpawn = false
@@ -488,7 +486,7 @@ FireBoton.Activated:Connect(function()
 	end
 end)
 -- 3. FUNCIÓN PARA PERMITIR ARRASTRAR EL BOTÓN
---===========================================
+--=========================================
 local function HacerArrastrable(boton)
     local arrastrando = false
     local entradaActual = nil
@@ -531,9 +529,9 @@ end
 
 -- Ejecuta la función sobre el botón para que funcione
 HacerArrastrable(FireBoton)
---==================================================
+--=========================================
 -- MOUSE / TOUCH POINT INPUTS
---==================================================
+--=========================================
 if UserInputService.TouchEnabled then
 	UserInputService.TouchTap:Connect(function(touchPositions, processed)
 		if processed or currentMode ~= "POINT" or not pointSelecting then return end
@@ -551,9 +549,9 @@ if UserInputService.MouseEnabled then
 	end)
 end
 
---==================================================
+--========================================
 -- SPAWN & BACKPACK LOGIC
---==================================================
+--=========================================
 createGun()
 portal_gun.Parent = getBackpack()
 
