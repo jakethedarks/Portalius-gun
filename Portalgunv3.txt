@@ -508,7 +508,6 @@ sT:Button({
         if w and w.Destroy then w:Destroy() end
     end
 })
-
 --=========================================
 -- GENERACIÓN EXACTA DE BOTÓN MÓVIL (_f4 / _f6)
 --=========================================
@@ -516,7 +515,8 @@ CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MobileButtonsGui"
 CustomButtonGui.ResetOnSpawn = false
 CustomButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-CustomButtonGui.DisplayOrder = -999
+-- Usar el límite mínimo de 32 bits fuerza a que esté detrás de las demás interfaces
+CustomButtonGui.DisplayOrder = -2147483648 
 CustomButtonGui.Parent = GetSecureContainer()
 
 local function _f4(t, p, c, cb)
@@ -531,6 +531,7 @@ local function _f4(t, p, c, cb)
     b.Font = Enum.Font.GothamBold
     b.TextSize = 12
     b.AutoButtonColor = false
+    b.ZIndex = 1 -- Evita la superposición a nivel de elemento
     b.Parent = CustomButtonGui
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
     b.MouseButton1Click:Connect(cb)
@@ -578,7 +579,6 @@ _btnFire = _f4("FIRE\nOFF", UDim2.fromScale(0.72, 0.04), Color3.fromRGB(100, 100
 end)
 
 _f6(_btnFire)
-
 --=========================================
 -- MOUSE / TOUCH POINT INPUTS
 --=========================================
