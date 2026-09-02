@@ -523,7 +523,7 @@ end
 CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MiNuevaInterfaz"
 CustomButtonGui.ResetOnSpawn = false
-CustomButtonGui.DisplayOrder = -5 -- Evita que se superponga al Hub
+CustomButtonGui.DisplayOrder = 0 -- Evita que se superponga al Hub
 CustomButtonGui.Parent = GetSecureContainer()
 
 local FireBoton = Instance.new("TextButton")
