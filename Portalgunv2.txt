@@ -458,12 +458,13 @@ end)
 --=========================================
 local pT = w:Tab({ Title = "Portal Gun", Icon = "lucide:crosshair" })
 
-pT:Button({ Title = "🎯 Modo: POINT", Callback = function() setMode("POINT") end })
+pT:Button({ Title = "🎯 Modo: POINT",
+Color = Color3.fromRGB(37, 122, 247),
+Callback = function() setMode("POINT") end })
 
-pT:Button({
-    Title = "🔄 RESETEAR PORTALES",
-    Color = Color3.fromRGB(255, 50, 50),
-    Callback = function() clearAllPortals() end
+pT:Button({ Title = "🔄 BORRAR PORTALES",
+Color = Color3.fromRGB(255, 50, 50),
+Callback = function() clearAllPortals() end
 })
 
 pT:Button({ Title = "👤 Modo: PLAYER", Callback = function() setMode("PLAYER") end })
