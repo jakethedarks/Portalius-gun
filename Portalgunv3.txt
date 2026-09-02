@@ -638,14 +638,13 @@ end)
 setMode("POINT")
 
 --=====================================================================
--- DETECTOR DE DESTRUCCIÓN TOTAL (UBICADO AL FINAL DEL SCRIPT)
+-- ELIMINAR O BORRAR ESTE BLOQUE
 --=====================================================================
 task.spawn(function()
     task.wait(2) 
     local uiContainer = GetSecureContainer()
     
     for _, desc in ipairs(uiContainer:GetDescendants()) do
-        -- Se busca la ventana principal del WindUI
         if desc:IsA("TextLabel") and string.find(desc.Text, "Family HS HUB") then
             local topBar = desc.Parent
             while topBar and not topBar:FindFirstChildOfClass("ImageButton") and topBar ~= uiContainer do
@@ -655,7 +654,6 @@ task.spawn(function()
             if topBar then
                 for _, btn in ipairs(topBar:GetDescendants()) do
                     if btn:IsA("ImageButton") or btn:IsA("TextButton") then
-                        -- Vincula la destrucción total al presionar la X
                         btn.MouseButton1Click:Connect(function()
                             destroyFullScript()
                         end)
