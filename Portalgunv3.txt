@@ -258,7 +258,7 @@ local function connectPortalTeleport(entrance, destination)
 		
 		teleportDebounce = true
 		if portal_sound then portal_sound:Play() end
-		hrp.CFrame = destination.CFrame * CFrame.new(0, 0, -3)
+		hrp.CFrame = destination.CFrame * CFrame.new(0, 0, -6)
 		task.wait(0.7)
 		teleportDebounce = false
 	end)
@@ -516,7 +516,7 @@ CustomButtonGui = Instance.new("ScreenGui")
 CustomButtonGui.Name = "MobileButtonsGui"
 CustomButtonGui.ResetOnSpawn = false
 CustomButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-CustomButtonGui.DisplayOrder = 0
+CustomButtonGui.DisplayOrder = -999
 CustomButtonGui.Parent = GetSecureContainer()
 
 local function _f4(t, p, c, cb)
