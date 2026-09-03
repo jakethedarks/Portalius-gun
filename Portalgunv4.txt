@@ -424,7 +424,7 @@ local w = W:CreateWindow({
         Enabled = true,
         Draggable = true,
         Scale = 0.8,
-        Position = UDim2.new(0.5, -25, 0, 20),
+        Position = UDim2.new(0.5,-125,0,120),
         Color = ColorSequence.new(Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 0)) 
     }
 })
