@@ -431,7 +431,7 @@ local w = W:CreateWindow({
 
 -- ANIMACIÓN RAINBOW
 task.spawn(function()
-    task.wait(0) 
+    task.wait(3) 
     
     local uiContainer = GetSecureContainer()
     local targetStroke = nil
