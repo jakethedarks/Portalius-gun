@@ -75,6 +75,56 @@ w:SetToggleKey(Enum.KeyCode.RightShift)
 -- ==========================================
 local tpTab = w:Tab({ Title = "Ubicación", Icon = "solar:routing-bold" })
 
+-- --- 🆕 TP POR COORDENADAS MANUALES (HASTA ARRIBA) ---
+local customCoords = nil
+
+tpTab:Input({
+    Title = "📍 Coordenadas Manuales (X, Y, Z)",
+    Desc = "Pega o escribe las coordenadas (Ej: 100, 50, -200)",
+    PlaceholderText = "Ingresa X, Y, Z...",
+    ClearTextOnFocus = false,
+    Callback = function(text)
+        -- Extrae automáticamente los primeros 3 números del texto
+        local nums = {}
+        for num in string.gmatch(text, "[%-?%d%.]+") do
+            table.insert(nums, tonumber(num))
+        end
+        if #nums >= 3 then
+            customCoords = Vector3.new(nums[1], nums[2], nums[3])
+        end
+    end
+})
+
+tpTab:Button({
+    Title = "🚀 Ir a Coordenadas Manuales (Instantáneo)",
+    Desc = "Te teletransporta a las coordenadas que escribiste arriba",
+    Callback = function()
+        if customCoords then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = CFrame.new(customCoords)
+            end
+        end
+    end
+})
+
+tpTab:Button({
+    Title = "📋 Copiar Mi Posición Actual",
+    Desc = "Copia las coordenadas exactas al portapapeles",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos = hrp.Position
+            toClipboard(string.format("%d, %d, %d", math.floor(pos.X), math.floor(pos.Y), math.floor(pos.Z)))
+        end
+    end
+})
+
+tpTab:Divider()
+
+-- --- SISTEMA DE PUNTOS GUARDADOS ---
 local savedPoints = {} 
 local savedNames = {}  
 local pointCounter = 1
@@ -95,10 +145,10 @@ local dropDownTarget = tpTab:Dropdown({
     end
 })
 
--- MOVIDO HACIA ARRIBA PARA ACCESO RÁPIDO
+-- MOVIDO HACIA ARRIBA PARA ACCESO RÁPIDO A PUNTOS GUARDADOS
 tpTab:Button({
-    Title = "⚡ Ir (Instantáneo)",
-    Desc = "Te teletransporta de golpe al punto seleccionado",
+    Title = "⚡ Ir al Punto Guardado (Instantáneo)",
+    Desc = "Te teletransporta de golpe al punto seleccionado arriba",
     Callback = function()
         if selectedPointIndex and savedPoints[selectedPointIndex] then
             local char = LocalPlayer.Character
@@ -161,7 +211,7 @@ tpTab:Input({
 })
 
 tpTab:Button({
-    Title = "🛸 Ir (Animado/Tween)",
+    Title = "🛸 Ir al Punto Guardado (Animado/Tween)",
     Desc = "Vuela hacia el punto seleccionado",
     Callback = function()
         if selectedPointIndex and savedPoints[selectedPointIndex] then
@@ -218,19 +268,6 @@ tpTab:Toggle({
 local genTab = w:Tab({
     Title = "Generador",
     Icon = "solar:document-bold"
-})
-
-genTab:Button({
-    Title = "📋 Copiar Mi Posición Actual",
-    Desc = "Copia las coordenadas exactas al portapapeles",
-    Callback = function()
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local pos = hrp.Position
-            toClipboard(string.format("%d, %d, %d", math.floor(pos.X), math.floor(pos.Y), math.floor(pos.Z)))
-        end
-    end
 })
 
 genTab:Toggle({
